@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ bucket_name }} - S3 File Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .draggable:hover {
+            background-color: #e5e7eb;
+            cursor: move;
+        }
+        .drop-zone {
+            border: 2px dashed #6b7280;
+            padding: 1rem;
+            text-align: center;
+            background-color: #f9fafb;
+        }
+        .drop-zone:hover {
+            background-color: #e5e7eb;
+        }
+        .folder-drop:hover {
+            background-color: #d1d5db;
+        }
+        .breadcrumbs a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center">{{ bucket_name }}</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <a href="/" class="inline-block mb-4 text-blue-600 hover:underline">Back to Home</a>
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold mb-2">Navigation</h2>
+                <nav class="breadcrumbs text-sm">
+                    <a href="/bucket/{{ bucket_name }}" class="text-blue-600">Root</a>
+                    {% if prefix %}
+                        {% set parts = prefix.rstrip('/').split('/') %}
+                        {% set current_path = '' %}
+                        {% for part in parts %}
+                            {% set current_path = current_path + part + '/' %}
+                            <span class="mx-1">/</span>
+                            <a href="/bucket/{{ bucket_name }}?prefix={{ current_path|urlencode }}" class="text-blue-600">{{ part }}</a>
+                        {% endfor %}
+                    {% endif %}
+                </nav>
+            </div>
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold mb-2">Create Folder</h2>
+                <form action="/create_folder/{{ bucket_name }}" method="post" class="flex">
+                    <input type="hidden" name="prefix" value="{{ prefix }}">
+                    <input type="text" name="folder_name" placeholder="Enter folder name" class="border p-2 rounded w-64" required>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 ml-2">Create Folder</button>
+                </form>
+            </div>
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold mb-2">Upload Files</h2>
+                <form action="/upload_file/{{ bucket_name }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="prefix" value="{{ prefix }}">
+                    <label class="drop-zone block">
+                        <span>Click or drag-and-drop to select files for upload</span>
+                        <input type="file" name="file" class="hidden" required>
+                    </label>
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mt-2">📤</button>
+                </form>
+            </div>
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold mb-2">Search Files</h2>
+                <form action="/search/{{ bucket_name }}" method="post" class="space-y-2">
+                    <input type="hidden" name="prefix" value="{{ prefix }}">
+                    <div class="flex">
+                        <input type="text" name="search_query" placeholder="Search files" class="border p-2 rounded w-64" required>
+                        <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 ml-2">🔎</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" name="min_size" placeholder="Min size (bytes)" class="border p-2 rounded">
+                        <input type="number" name="max_size" placeholder="Max size (bytes)" class="border p-2 rounded">
+                        <input type="date" name="start_date" placeholder="Start date" class="border p-2 rounded">
+                        <input type="date" name="end_date" placeholder="End date" class="border p-2 rounded">
+                        <select name="content_type" class="border p-2 rounded">
+                            <option value="">Any content type</option>
+                            <option value="image/jpeg">JPEG Image</option>
+                            <option value="image/png">PNG Image</option>
+                            <option value="text/plain">Text</option>
+                            <option value="application/pdf">PDF</option>
+                        </select>
+                        <input type="text" name="tag" placeholder="Filter by tag" class="border p-2 rounded">
+                    </div>
+                </form>
+            </div>
+            <h2 class="text-lg font-semibold mb-2">Contents</h2>
+            <p class="text-sm text-gray-600 mb-4">To move/copy: Drag a file (click and hold), note its name, and use the form in the target folder to specify the action.</p>
+            <form action="/bulk_delete/{{ bucket_name }}" method="post" class="mb-4">
+                <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Delete Selected</button>
+                <div class="inline-block ml-2">
+                    <input type="text" name="destination" placeholder="Destination path" class="border p-2 rounded w-64">
+                    <button formaction="/bulk_copy/{{ bucket_name }}" type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 ml-2">Copy Selected</button>
+                    <button formaction="/bulk_move/{{ bucket_name }}" type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 ml-2">Move Selected</button>
+                </div>
+                <table class="w-full table-auto mt-2">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-2 text-left"><input type="checkbox" onclick="this.closest('table').querySelectorAll('tbody input[type=checkbox]').forEach(cb => cb.checked = this.checked)"></th>
+                            <th class="p-2 text-left">Name</th>
+                            <th class="p-2 text-left">Type</th>
+                            <th class="p-2 text-left">Size</th>
+                            <th class="p-2 text-left">Last Modified</th>
+                            <th class="p-2 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for folder in folders %}
+                        <tr class="border-b folder-drop">
+                            <td class="p-2"><input type="checkbox" name="keys" value="{{ folder.Key }}"></td>
+                            <td class="p-2">
+                                <a href="/bucket/{{ bucket_name }}?prefix={{ folder.Key|urlencode }}" class="text-blue-600 hover:underline">{{ folder.Key }}</a>
+                            </td>
+                            <td class="p-2">Folder</td>
+                            <td class="p-2">{{ folder.Size }} bytes</td>
+                            <td class="p-2">-</td>
+                            <td class="p-2 space-x-2">
+                                <a href="/confirm_delete_folder/{{ bucket_name }}/{{ folder.Key|urlencode }}?prefix={{ prefix|urlencode }}" class="text-red-500 hover:text-red-700">🚮</a>
+                                <form action="/rename/{{ bucket_name }}/{{ folder.Key|urlencode }}" method="post" class="inline">
+                                    <input type="hidden" name="prefix" value="{{ prefix }}">
+                                    <input type="text" name="new_name" placeholder="New folder name" class="border p-1 rounded w-32" required>
+                                    <button type="submit" class="text-yellow-500 hover:text-yellow-700">Rename</button>
+                                </form>
+                                <form action="/move_file/{{ bucket_name }}" method="post" class="inline">
+                                    <input type="text" name="file_key" placeholder="Dragged file key" class="border p-1 rounded w-32" required>
+                                    <input type="hidden" name="destination" value="{{ folder.Key }}">
+                                    <button type="submit" class="text-blue-500 hover:text-blue-700">Move</button>
+                                </form>
+                                <form action="/copy_file/{{ bucket_name }}" method="post" class="inline">
+                                    <input type="text" name="file_key" placeholder="Dragged file key" class="border p-1 rounded w-32" required>
+                                    <input type="hidden" name="destination" value="{{ folder.Key }}">
+                                    <button type="submit" class="text-blue-500 hover:text-blue-700">Copy</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for obj in objects %}
+                        <tr class="border-b draggable" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '{{ obj.Key }}')">
+                            <td class="p-2"><input type="checkbox" name="keys" value="{{ obj.Key }}"></td>
+                            <td class="p-2">{{ obj.Key }}</td>
+                            <td class="p-2">{{ obj.Type }}</td>
+                            <td class="p-2">{{ obj.Size }} bytes</td>
+                            <td class="p-2">{{ obj.LastModified }}</td>
+                            <td class="p-2 space-x-2">
+                                <a href="/preview/{{ bucket_name }}/{{ obj.Key|urlencode }}?prefix={{ prefix|urlencode }}" class="text-blue-500 hover:text-blue-700">👁️‍🗨️</a>
+                                <a href="/download/{{ bucket_name }}/{{ obj.Key|urlencode }}" class="text-green-500 hover:text-green-700">📥</a>
+                                <a href="/metadata/{{ bucket_name }}/{{ obj.Key|urlencode }}?prefix={{ prefix|urlencode }}" class="text-purple-500 hover:text-purple-700">🏷️</a>
+                                <a href="/share/{{ bucket_name }}/{{ obj.Key|urlencode }}?prefix={{ prefix|urlencode }}" class="text-teal-500 hover:text-teal-700">🔗</a>
+                                <form action="/delete_file/{{ bucket_name }}/{{ obj.Key|urlencode }}" method="post" class="inline">
+                                    <button type="submit" class="text-red-500 hover:text-red-700">🚮</button>
+                                </form>
+                                <form action="/rename/{{ bucket_name }}/{{ obj.Key|urlencode }}" method="post" class="inline">
+                                    <input type="hidden" name="prefix" value="{{ prefix }}">
+                                    <input type="text" name="new_name" placeholder="New file name" class="border p-1 rounded w-32" required>
+                                    <button type="submit" class="text-yellow-500 hover:text-yellow-700">Rename</button>
+                                </form>
+                                <form class="inline">
+                                    <input type="hidden" name="file_key" value="{{ obj.Key }}">
+                                    <input type="text" name="destination" placeholder="Destination path" class="border p-1 rounded w-32" required>
+                                    <button formaction="/copy_file/{{ bucket_name }}" type="submit" class="text-blue-500 hover:text-blue-700">Copy</button>
+                                    <button formaction="/move_file/{{ bucket_name }}" type="submit" class="text-blue-500 hover:text-blue-700">Move</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+            <form action="/zip_files/{{ bucket_name }}" method="post" class="mt-4">
+                {% for obj in objects %}
+                <input type="checkbox" name="files" value="{{ obj.Key }}"> {{ obj.Key }}<br>
+                {% endfor %}
+                <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 mt-2">Zip Selected Files</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

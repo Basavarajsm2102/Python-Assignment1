@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bucket Usage Dashboard - S3 File Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .bar {
+            height: 20px;
+            background-color: #3b82f6;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center">Bucket Usage Dashboard</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <a href="/" class="inline-block mb-4 text-blue-600 hover:underline">Back to Home</a>
+            <h2 class="text-lg font-semibold mb-2">Bucket Statistics</h2>
+            <table class="w-full table-auto mb-4">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2 text-left">Bucket Name</th>
+                        <th class="p-2 text-left">Total Size (bytes)</th>
+                        <th class="p-2 text-left">Files</th>
+                        <th class="p-2 text-left">Folders</th>
+                        <th class="p-2 text-left">Last Modified</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bucket in stats %}
+                    <tr class="border-b">
+                        <td class="p-2"><a href="/bucket/{{ bucket.name }}" class="text-blue-600 hover:underline">{{ bucket.name }}</a></td>
+                        <td class="p-2">{{ bucket.total_size }}</td>
+                        <td class="p-2">{{ bucket.file_count }}</td>
+                        <td class="p-2">{{ bucket.folder_count }}</td>
+                        <td class="p-2">{{ bucket.last_modified }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h2 class="text-lg font-semibold mb-2">Bucket Size Comparison</h2>
+            {% set max_size = stats|map(attribute='total_size')|max|default(1) %}
+            <div class="space-y-4">
+                {% for bucket in stats %}
+                <div>
+                    <p class="text-sm font-semibold">{{ bucket.name }}</p>
+                    <div class="bar" style="width: {{ (bucket.total_size / max_size * 100)|round(2) }}%"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

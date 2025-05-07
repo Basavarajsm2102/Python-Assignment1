@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share File - S3 File Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        h1 { text-align: center; }
+        h2 { margin-top: 0; }
+        .error { color: red; }
+        .success { color: green; }
+        textarea { width: 100%; height: 100px; margin-top: 10px; background: #f8f8f8; }
+        select, button { padding: 8px; margin: 10px 0; }
+        button { background: #008080; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #006666; }
+        a { color: #0000ff; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Share File</h1>
+        <a href="/bucket/{{ bucket_name }}?prefix={{ prefix|urlencode }}">Back to Bucket</a>
+        <h2>Share: {{ file_key }}</h2>
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+        {% if url %}
+        <div>
+            <p class="success">Shareable Link (valid for 
+                {% if expires_in < 3600 %}
+                    {{ expires_in }} seconds
+                {% elif expires_in < 86400 %}
+                    {{ (expires_in / 3600)|round(1) }} hours
+                {% else %}
+                    {{ (expires_in / 86400)|round(1) }} days
+                {% endif %}):
+            </p>
+            <textarea readonly>{{ url }}</textarea>
+            <p>Copy this link to share. It will expire after the specified time.</p>
+        </div>
+        {% endif %}
+        <form action="/share/{{ bucket_name }}/{{ file_key|urlencode }}" method="post">
+            <input type="hidden" name="prefix" value="{{ prefix }}">
+            <label for="expires_in">Change Expiration Time:</label>
+            <select id="expires_in" name="expires_in" required>
+                <option value="" disabled selected>Choose duration</option>
+                <option value="3600">1 hour</option>
+                <option value="14400">4 hours</option>
+                <option value="86400">1 day</option>
+                <option value="604800">1 week</option>
+            </select>
+            <button type="submit">Regenerate Link</button>
+        </form>
+    </div>
+</body>
+</html>

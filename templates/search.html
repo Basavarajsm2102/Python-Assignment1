@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - S3 File Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center">Search Results for "{{ search_query }}"</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <a href="/bucket/{{ bucket_name }}?prefix={{ prefix|urlencode }}" class="inline-block mb-4 text-blue-600 hover:underline">Back to Bucket</a>
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="p-2 text-left">Name</th>
+                        <th class="p-2 text-left">Type</th>
+                        <th class="p-2 text-left">Size</th>
+                        <th class="p-2 text-left">Last Modified</th>
+                        <th class="p-2 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in objects %}
+                    <tr class="border-b">
+                        <td class="p-2">{{ obj.Key }}</td>
+                        <td class="p-2">{{ obj.Type }}</td>
+                        <td class="p-2">{{ obj.Size }} bytes</td>
+                        <td class="p-2">{{ obj.LastModified }}</td>
+                        <td class="p-2 space-x-2">
+                            <a href="/preview/{{ bucket_name }}/{{ obj.Key|urlencode }}" class="text-blue-500 hover:text-blue-700">Preview</a>
+                            <a href="/download/{{ bucket_name }}/{{ obj.Key|urlencode }}" class="text-green-500 hover:text-green-700">Download</a>
+                            <a href="/metadata/{{ bucket_name }}/{{ obj.Key|urlencode }}?prefix={{ prefix|urlencode }}" class="text-purple-500 hover:text-purple-700">Metadata</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
