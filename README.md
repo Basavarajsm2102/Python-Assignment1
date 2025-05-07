@@ -38,7 +38,7 @@ Cloud File Navigator Pro is a web-based file management application for AWS S3, 
 
 3. **Install Dependencies**:
    ```bash
-   pip install fastapi uvicorn boto3 jinja2 python-multipart
+   pip install -r requirements.txt
    ```
 
 4. **Configure AWS Credentials**:
@@ -90,7 +90,7 @@ Cloud File Navigator Pro is a web-based file management application for AWS S3, 
    The application will be available at `http://localhost:8000`.
 
 2. **Access the Application**:
-   Open your browser and navigate to `http://localhost:8000`. You’ll see the homepage listing your S3 buckets.
+   Open your browser and navigate to `http://localhost:8000`. The homepage will display your S3 buckets.
 
 ## Usage
 
