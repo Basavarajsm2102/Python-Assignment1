@@ -121,4 +121,4 @@ Contributions are welcome! Please submit a pull request or open an issue to disc
 
 ## Contact
 
-For support or feature requests, contact [basavarajsm2102@gmail.com] or open an issue on GitHub.
+For support or feature requests, contact basavarajsm2102@gmail.com or open an issue on GitHub.
