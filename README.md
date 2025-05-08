@@ -13,8 +13,6 @@ Cloud File Navigator Pro is a web-based file management application for AWS S3, 
 - **File Tagging**: Add and filter files by custom tags for better organization.
 - **Preview Files**: Inline preview for images, text, and PDFs.
 - **Breadcrumbs Navigation**: Navigate folder hierarchies easily.
-- **No JavaScript**: Fully server-side rendered with FastAPI and Jinja2 for accessibility.
-- **Responsive UI**: Styled with Tailwind CSS for a modern, professional look.
 
 ## Prerequisites
 
@@ -113,20 +111,14 @@ Cloud File Navigator Pro is a web-based file management application for AWS S3, 
 5. **View Dashboard**:
    - From the homepage, check the dashboard for bucket stats and the size comparison chart.
 
-## Notes
-
-- **No JavaScript**: The application uses server-side rendering, ensuring compatibility but limiting dynamic features like real-time upload progress.
-- **Recent Fixes**: Resolved upload endpoint errors, improved file preview, and combined copy/move inputs for efficiency.
-- **AWS S3**: Ensure buckets and objects exist in your AWS account. Check IAM permissions if errors occur (e.g., `AccessDenied`).
-
 ## Contributing
 
 Contributions are welcome! Please submit a pull request or open an issue to discuss improvements.
 
 ## License
 
-[MIT License](LICENSE) (or specify your preferred license).
+[MIT License](LICENSE)
 
 ## Contact
 
-For support or feature requests, contact [your-email@example.com] or open an issue on GitHub.
+For support or feature requests, contact [basavarajsm2102@gmail.com] or open an issue on GitHub.
