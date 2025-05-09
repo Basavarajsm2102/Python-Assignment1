@@ -24,7 +24,7 @@ Cloud File Navigator Pro is a web-based file management application for AWS S3, 
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-username/cloud-file-navigator-pro.git
+   git clone https://github.com/Basavarajsm2102/cloud-file-navigator-pro.git
    cd cloud-file-navigator-pro
    ```
 
