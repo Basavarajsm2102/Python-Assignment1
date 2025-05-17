@@ -1,4 +1,4 @@
-#!/home/basavarajmadiwalar/Documents/projects/Python-Assignment1/venv/bin/python3
+#!/home/basavarajmadiwalar/Downloads/Python-Assignment1/venv/bin/python3
 
 import sys
 import json
