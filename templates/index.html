@@ -3,51 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S3 File Manager</title>
+    <title>Cloud File Navigator Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #e0e7ff 0%, #e0f2fe 100%);
+        }
+        .chart-container {
+            height: 100px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100">
     <div class="container mx-auto p-6">
-        <h1 class="text-3xl font-bold mb-6 text-center">S3 File Manager</h1>
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="mb-4">
-                <h2 class="text-lg font-semibold mb-2">Create Bucket</h2>
-                <form action="/create_bucket" method="post">
-                    <input type="text" name="bucket_name" placeholder="Enter bucket name" class="border p-2 rounded w-64" required>
-                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Create Bucket</button>
-                </form>
-            </div>
-            <div class="mb-4">
-                <h2 class="text-lg font-semibold mb-2">Buckets</h2>
-                <a href="/dashboard" class="inline-block mb-2 text-blue-600 hover:underline">View Dashboard</a>
-                {% if buckets %}
-                <table class="w-full table-auto">
-                    <thead>
-                        <tr class="bg-gray-200">
-                            <th class="p-2 text-left">Name</th>
-                            <th class="p-2 text-left">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for bucket in buckets %}
-                        <tr class="border-b">
-                            <td class="p-2">
-                                <a href="/bucket/{{ bucket }}" class="text-blue-600 hover:underline">{{ bucket }}</a>
-                            </td>
-                            <td class="p-2">
-                                <form action="/delete_bucket/{{ bucket }}" method="post" class="inline">
-                                    <button type="submit" class="text-red-500 hover:text-red-700">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p>No buckets found.</p>
-                {% endif %}
-            </div>
+        <h1 class="text-3xl font-bold mb-6 text-indigo-600">Cloud File Navigator Pro</h1>
+        
+        <!-- Bucket Dropdown -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select a Bucket</h2>
+            {% if buckets %}
+                <select id="bucket-select" onchange="navigateToBucket()" class="w-full sm:w-1/2 p-3 border rounded-lg bg-white shadow focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-700">
+                    <option value="" disabled selected>Select a bucket...</option>
+                    {% for bucket in buckets %}
+                        <option value="{{ bucket }}">{{ bucket }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <p class="text-gray-600">No buckets found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Create Bucket Form -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Create New Bucket</h2>
+            <form action="/create_bucket" method="post" class="flex space-x-4">
+                <input type="text" name="bucket_name" placeholder="Enter bucket name" class="p-2 border rounded-lg w-full" required>
+                <button type="submit" class="bg-indigo-500 text-white p-2 rounded-lg hover:bg-indigo-600">Create Bucket</button>
+            </form>
+        </div>
+
+        <!-- Creative Dashboard -->
+        <div>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Bucket Statistics Dashboard</h2>
+            {% if stats %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for stat in stats %}
+                        <div class="card bg-white rounded-lg shadow-lg gradient-bg p-6">
+                            <!-- Bucket Name and Toggle -->
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-bold text-indigo-700">
+                                    <i class="fas fa-database mr-2"></i>{{ stat.name }}
+                                </h3>
+                                <button onclick="toggleDetails('{{ stat.name }}')" class="text-indigo-500 hover:text-indigo-700">
+                                    <i id="toggle-icon-{{ stat.name }}" class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
+
+                            <!-- Collapsible Details -->
+                            <div id="details-{{ stat.name }}" class="hidden">
+                                <!-- Stats -->
+                                <div class="space-y-3">
+                                    <p class="text-gray-700">
+                                        <i class="fas fa-weight-hanging text-green-500 mr-2"></i>
+                                        <span class="font-semibold">Total Size:</span> 
+                                        <span id="size-{{ stat.name }}">{{ stat.total_size }}</span>
+                                    </p>
+                                    <p class="text-gray-700">
+                                        <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                                        <span class="font-semibold">Files:</span> 
+                                        <span class="{% if stat.file_count == 0 %}text-red-500{% else %}text-gray-700{% endif %}">
+                                            {{ stat.file_count }}
+                                        </span>
+                                    </p>
+                                    <p class="text-gray-700">
+                                        <i class="fas fa-folder text-yellow-500 mr-2"></i>
+                                        <span class="font-semibold">Folders:</span> 
+                                        <span class="{% if stat.folder_count == 0 %}text-red-500{% else %}text-gray-700{% endif %}">
+                                            {{ stat.folder_count }}
+                                        </span>
+                                    </p>
+                                    <p class="text-gray-700">
+                                        <i class="fas fa-clock text-purple-500 mr-2"></i>
+                                        <span class="font-semibold">Last Modified:</span> {{ stat.last_modified }}
+                                    </p>
+                                </div>
+
+                                <!-- Mini Chart -->
+                                <div class="chart-container mt-4">
+                                    <canvas id="chart-{{ stat.name }}"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">No statistics available.</p>
+            {% endif %}
         </div>
     </div>
+
+    <script>
+        // Function to navigate to the selected bucket
+        function navigateToBucket() {
+            const select = document.getElementById('bucket-select');
+            const bucket = select.value;
+            if (bucket) {
+                window.location.href = `/bucket/${bucket}`;
+            }
+        }
+
+        // Function to format bytes to human-readable units
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Update sizes to human-readable format
+        {% for stat in stats %}
+            const sizeElement{{ stat.name | replace("-", "_") }} = document.getElementById('size-{{ stat.name }}');
+            sizeElement{{ stat.name | replace("-", "_") }}.textContent = formatBytes({{ stat.total_size }});
+        {% endfor %}
+
+        // Toggle details visibility
+        function toggleDetails(bucketName) {
+            const details = document.getElementById(`details-${bucketName}`);
+            const icon = document.getElementById(`toggle-icon-${bucketName}`);
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                details.classList.add('hidden');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        // Initialize charts
+        {% for stat in stats %}
+            const ctx{{ stat.name | replace("-", "_") }} = document.getElementById('chart-{{ stat.name }}').getContext('2d');
+            new Chart(ctx{{ stat.name | replace("-", "_") }}, {
+                type: 'bar',
+                data: {
+                    labels: ['Files', 'Folders'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [{{ stat.file_count }}, {{ stat.folder_count }}],
+                        backgroundColor: ['#3b82f6', '#eab308'],
+                        borderColor: ['#2563eb', '#ca8a04'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        {% endfor %}
+    </script>
 </body>
 </html>
